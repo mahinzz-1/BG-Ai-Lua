@@ -1,0 +1,63 @@
+name: Extract BedWar Source
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Allow GitHub Actions to push changes back to the repository
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract Christ-lua.zip
+        shell: bash
+        run: |
+          set -e
+
+          cd "$GITHUB_WORKSPACE"
+
+          echo "Checking for Christ-lua.zip..."
+
+          if [ ! -f "Christ-lua.zip" ]; then
+            echo "ERROR: Christ-lua.zip not found in repository root."
+            exit 1
+          fi
+
+          echo "Extracting Christ-lua.zip into repository root..."
+          unzip -o "Christ-lua.zip" -d .
+
+          echo "Deleting Christ-lua.zip..."
+          rm -f "Christ-lua.zip"
+
+          echo "Extraction complete."
+
+      - name: Commit extracted files
+        shell: bash
+        run: |
+          set -e
+
+          cd "$GITHUB_WORKSPACE"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Extract BedWar source from ZIP"
+          git push origin HEAD:main
